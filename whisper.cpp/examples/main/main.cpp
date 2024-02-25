@@ -37,6 +37,7 @@ struct whisper_params {
     int32_t best_of      = whisper_full_default_params(WHISPER_SAMPLING_GREEDY).greedy.best_of;
     int32_t beam_size    = whisper_full_default_params(WHISPER_SAMPLING_BEAM_SEARCH).beam_search.beam_size;
     int32_t audio_ctx   = 0;
+    int32_t audio_ctx_base   = 300;
 
     float word_thold    =  0.01f;
     float entropy_thold =  2.40f;
@@ -110,6 +111,7 @@ bool whisper_params_parse(int argc, char ** argv, whisper_params & params) {
         else if (arg == "-bo"   || arg == "--best-of")         { params.best_of         = std::stoi(argv[++i]); }
         else if (arg == "-bs"   || arg == "--beam-size")       { params.beam_size       = std::stoi(argv[++i]); }
         else if (arg == "-ac"   || arg == "--audio-context")   { params.audio_ctx       = std::stoi(argv[++i]); }
+        else if (arg == "--audio-context-base")                { params.audio_ctx_base       = std::stoi(argv[++i]); }
         else if (arg == "-wt"   || arg == "--word-thold")      { params.word_thold      = std::stof(argv[++i]); }
         else if (arg == "-et"   || arg == "--entropy-thold")   { params.entropy_thold   = std::stof(argv[++i]); }
         else if (arg == "-lpt"  || arg == "--logprob-thold")   { params.logprob_thold   = std::stof(argv[++i]); }
@@ -897,7 +899,7 @@ int main(int argc, char ** argv) {
         float wav_seconds = float(pcmf32.size()) / WHISPER_SAMPLE_RATE;
 
         // https://github.com/ggerganov/whisper.cpp/issues/1855
-        params.audio_ctx = (int32_t)((wav_seconds / 30.0f) * 1500.0f) + 128;
+        params.audio_ctx = (int32_t)((wav_seconds / 30.0f) * 1500.0f) + params.audio_ctx_base;
         fprintf(stderr, "audio context: %d\n", params.audio_ctx);
 
         if (!whisper_is_multilingual(ctx)) {

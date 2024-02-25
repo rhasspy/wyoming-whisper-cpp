@@ -10,6 +10,12 @@
 
 ## Local Install
 
+Install dependencies:
+
+```sh
+sudo apt-get install build-essential
+```
+
 Clone the repository and set up Python virtual environment:
 
 ``` sh
@@ -18,9 +24,21 @@ cd wyoming-whisper-cpp
 script/setup
 ```
 
+Build the whisper.cpp `main` executable:
+
+```sh
+make -C whisper.cpp/ main
+```
+
 Run a server anyone can connect to:
 ```sh
-script/run --model tiny.en-q5_1 --language en --uri 'tcp://0.0.0.0:10300' --data-dir /data --download-dir /data
+script/run \
+  --whisper-cpp-dir ./whisper.cpp \
+  --model tiny.en-q5_1 \
+  --language en \
+  --uri 'tcp://0.0.0.0:10300' \
+  --data-dir /data \
+  --download-dir /data
 ```
 
 ## Docker Image

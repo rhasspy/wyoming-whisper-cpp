@@ -51,11 +51,7 @@ async def main() -> None:
         type=int,
         default=5,
     )
-    parser.add_argument(
-        "--audio-context-multiplier",
-        type=float,
-        default=64,
-    )
+    parser.add_argument("--audio-context-base", type=int)
     #
     parser.add_argument("--debug", action="store_true", help="Log DEBUG messages")
     parser.add_argument(
@@ -132,6 +128,10 @@ async def main() -> None:
     server = AsyncServer.from_uri(args.uri)
     _LOGGER.info("Ready")
 
+    optional_args = []
+    if args.audio_context_base is not None:
+        optional_args.extend(["--audio-context-base", str(args.audio_context_base)])
+
     model_proc = await asyncio.create_subprocess_exec(
         str(args.whisper_cpp_dir / "main"),
         "--model",
@@ -140,6 +140,7 @@ async def main() -> None:
         str(args.language),
         "--beam-size",
         str(args.beam_size),
+        *optional_args,
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
     )
