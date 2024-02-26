@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import logging
+import shlex
 from functools import partial
 from pathlib import Path
 from typing import Optional
@@ -51,7 +52,13 @@ async def main() -> None:
         type=int,
         default=5,
     )
-    parser.add_argument("--audio-context-base", type=int)
+    parser.add_argument(
+        "--audio-context-base", type=int, help="Base length of audio_ctx"
+    )
+    parser.add_argument(
+        "--whisper-cpp-args",
+        help="Additional arguments to pass to whisper cpp executable",
+    )
     #
     parser.add_argument("--debug", action="store_true", help="Log DEBUG messages")
     parser.add_argument(
@@ -132,7 +139,10 @@ async def main() -> None:
     if args.audio_context_base is not None:
         optional_args.extend(["--audio-context-base", str(args.audio_context_base)])
 
-    model_proc = await asyncio.create_subprocess_exec(
+    if args.whisper_cpp_args:
+        optional_args.extend(shlex.split(args.whisper_cpp_args))
+
+    model_args = [
         str(args.whisper_cpp_dir / "main"),
         "--model",
         str(model_path),
@@ -141,6 +151,11 @@ async def main() -> None:
         "--beam-size",
         str(args.beam_size),
         *optional_args,
+    ]
+
+    _LOGGER.debug(model_args)
+    model_proc = await asyncio.create_subprocess_exec(
+        *model_args,
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
     )
