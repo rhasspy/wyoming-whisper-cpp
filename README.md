@@ -35,3 +35,11 @@ script/run \
   --download-dir /data
 ```
 
+## Docker Image
+
+``` sh
+docker run -it -p 10300:10300 -v /path/to/local/data:/data rhasspy/wyoming-whisper-cpp \
+    --data-dir /data --model tiny.en-q5_1 --language en
+```
+
+[Source](https://github.com/rhasspy/wyoming-addons/tree/master/whisper-cpp)
