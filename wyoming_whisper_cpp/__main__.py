@@ -53,7 +53,7 @@ async def main() -> None:
         default=5,
     )
     parser.add_argument(
-        "--audio-context-base", type=int, help="Base length of audio_ctx"
+        "--audio-context-base", type=int, default=300, help="Base length of audio_ctx"
     )
     parser.add_argument(
         "--whisper-cpp-args",
@@ -135,10 +135,7 @@ async def main() -> None:
     server = AsyncServer.from_uri(args.uri)
     _LOGGER.info("Ready")
 
-    optional_args = []
-    if args.audio_context_base is not None:
-        optional_args.extend(["--audio-context-base", str(args.audio_context_base)])
-
+    optional_args = ["--audio-context-base", str(args.audio_context_base)]
     if args.whisper_cpp_args:
         optional_args.extend(shlex.split(args.whisper_cpp_args))
 
