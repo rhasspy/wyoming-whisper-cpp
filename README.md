@@ -43,3 +43,7 @@ docker run -it -p 10300:10300 -v /path/to/local/data:/data rhasspy/wyoming-whisp
 ```
 
 [Source](https://github.com/rhasspy/wyoming-addons/tree/master/whisper-cpp)
+
+## GPU Support
+
+For more advanced use cases, consider the community-built [wyoming-whisper-api-client](https://github.com/ser/wyoming-whisper-api-client)
