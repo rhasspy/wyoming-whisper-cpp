@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include "whisper.h"
+#include "json.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -13,6 +14,8 @@
 #if defined(_MSC_VER)
 #pragma warning(disable: 4244 4267) // possible loss of data
 #endif
+
+using json = nlohmann::ordered_json;
 
 // helper function to replace substrings
 void replace_all(std::string & s, const std::string & search, const std::string & replace) {
@@ -877,7 +880,12 @@ int main(int argc, char ** argv) {
 
     std::string line;
     while (std::getline(std::cin, line)) {
-        std::size_t num_wav_bytes = stoi(line);
+        // { "size": <bytes in WAV data>, "language": <language code> }
+        json request = json::parse(line);
+        std::size_t num_wav_bytes = request["size"].get<std::size_t>();
+        params.language = request["language"].get<std::string>();
+
+        // Read WAV bytes from stdin
         uint8_t wav_buffer[num_wav_bytes];
         const std::size_t num_bytes_read = fread(wav_buffer, 1, sizeof(wav_buffer), stdin);
         if (num_bytes_read != num_wav_bytes) {
@@ -901,17 +909,6 @@ int main(int argc, char ** argv) {
         // https://github.com/ggerganov/whisper.cpp/issues/1855
         params.audio_ctx = (int32_t)((wav_seconds / 30.0f) * 1500.0f) + params.audio_ctx_base;
         fprintf(stderr, "audio context: %d\n", params.audio_ctx);
-
-        if (!whisper_is_multilingual(ctx)) {
-            if (params.language != "en" || params.translate) {
-                params.language = "en";
-                params.translate = false;
-                fprintf(stderr, "%s: WARNING: model is not multilingual, ignoring language and translation options\n", __func__);
-            }
-        }
-        if (params.detect_language) {
-            params.language = "auto";
-        }
 
         if (!params.no_prints) {
             // print system information

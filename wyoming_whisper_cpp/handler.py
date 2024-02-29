@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import io
+import json
 import logging
 import wave
 from asyncio.subprocess import Process
@@ -70,8 +71,11 @@ class WhisperCppEventHandler(AsyncEventHandler):
                 assert self.model_proc.stdout is not None
 
                 async with self.model_proc_lock:
-                    size_line = f"{len(wav_bytes)}\n".encode("utf-8")
-                    self.model_proc.stdin.write(size_line)
+                    request_str = json.dumps(
+                        {"size": len(wav_bytes), "language": self._language}
+                    )
+                    request_line = f"{request_str}\n".encode("utf-8")
+                    self.model_proc.stdin.write(request_line)
                     self.model_proc.stdin.write(wav_bytes)
                     await self.model_proc.stdin.drain()
 
@@ -85,6 +89,7 @@ class WhisperCppEventHandler(AsyncEventHandler):
                         )
 
                 text = " ".join(lines)
+                text = text.replace("[BLANK_AUDIO]", "").strip()
 
             _LOGGER.info(text)
 

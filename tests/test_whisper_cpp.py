@@ -15,15 +15,22 @@ from wyoming.info import Describe, Info
 _DIR = Path(__file__).parent
 _PROGRAM_DIR = _DIR.parent
 _LOCAL_DIR = _PROGRAM_DIR / "local"
-_MODEL = "tiny.en-q5_1"
+_MODEL = "tiny-q5_1"
 _SAMPLES_PER_CHUNK = 1024
 
 # Need to give time for the model to download
 _TRANSCRIBE_TIMEOUT = 60
 
+_TEST_PHRASE = {
+    "en": "turn on the living room lamp",
+    "fr": "pouvez-vous me parli en français",
+    "uk": "верозмовляєте українською",
+}
 
+
+@pytest.mark.parametrize("language", ["en", "uk", "fr"])
 @pytest.mark.asyncio
-async def test_whisper_cpp() -> None:
+async def test_whisper_cpp(language: str) -> None:
     proc = await asyncio.create_subprocess_exec(
         sys.executable,
         "-m",
@@ -31,7 +38,7 @@ async def test_whisper_cpp() -> None:
         "--uri",
         "stdio://",
         "--whisper-cpp-dir",
-        str(_LOCAL_DIR / "whisper.cpp"),
+        str(_PROGRAM_DIR / "whisper.cpp"),
         "--model",
         _MODEL,
         "--data-dir",
@@ -60,11 +67,13 @@ async def test_whisper_cpp() -> None:
         assert any(m.name == _MODEL for m in asr.models), f"Expected {_MODEL} model"
         break
 
-    # We want to use the whisper model
-    await async_write_event(Transcribe(name=_MODEL).event(), proc.stdin)
+    # We want to use a specific language
+    await async_write_event(
+        Transcribe(name=_MODEL, language=language).event(), proc.stdin
+    )
 
     # Test known WAV
-    with wave.open(str(_DIR / "turn_on_the_living_room_lamp.wav"), "rb") as example_wav:
+    with wave.open(str(_DIR / f"{language}.wav"), "rb") as example_wav:
         await async_write_event(
             AudioStart(
                 rate=example_wav.getframerate(),
@@ -89,8 +98,8 @@ async def test_whisper_cpp() -> None:
 
         transcript = Transcript.from_event(event)
         text = transcript.text.lower().strip()
-        text = re.sub(r"[^a-z ]", "", text)
-        assert text == "turn on the living room lamp"
+        text = re.sub(r"[.!?]", "", text)
+        assert text == _TEST_PHRASE[language]
         break
 
     # Need to close stdin for graceful termination
